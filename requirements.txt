@@ -1,0 +1,9 @@
+# you will need to install opencv seperately
+# in particular, "python open cv"
+# http://www.lfd.uci.edu/~gohlke/pythonlibs/#opencv
+# and typically the 32bit version of it
+# also make sure to download the right version
+# via the "cp34" "cp35" "cp27" cp = cpython version
+numpy
+matplotlib
+
