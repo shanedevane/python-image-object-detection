@@ -7,3 +7,12 @@
 numpy
 matplotlib
 
+
+# WARNING
+# There is a gotya regarding open cv and open cv contrib
+# packages as "SURF" and "SIFT" have been moved into
+# open cvs contrib package.
+# What this means is that you need to install the contrib
+# open cv package too.
+# The gotya is that this contrib package seems to be only
+# for python 2.7 and 3.5 (ie. NOT 3.4)
