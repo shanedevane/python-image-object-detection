@@ -15,12 +15,15 @@ import timeit
 """
 
 
-img = cv2.imread('../Resources/dog.jpg', cv2.IMREAD_GRAYSCALE)
-# img = cv2.imread('../Resources/dog.jpg', cv2.IMREAD_COLOR)
+IMAGE_RESOURCE = '../Resources/dog.jpg'
+
+
+img = cv2.imread(IMAGE_RESOURCE, cv2.IMREAD_GRAYSCALE)
+# img = cv2.imread(IMAGE_RESOURCE, cv2.IMREAD_COLOR)
 
 
 def avg_img_intensity_manual():
-    img = cv2.imread('../Resources/dog.jpg', cv2.IMREAD_GRAYSCALE)
+    img = cv2.imread(IMAGE_RESOURCE, cv2.IMREAD_GRAYSCALE)
     rows = img.shape[0]
     cols = img.shape[0]
     pixel_bgr = 0.0
@@ -33,19 +36,19 @@ def avg_img_intensity_manual():
 
 
 def avg_img_intensity_numpy():
-    img = cv2.imread('../Resources/dog.jpg', cv2.IMREAD_GRAYSCALE)
+    img = cv2.imread(IMAGE_RESOURCE, cv2.IMREAD_GRAYSCALE)
     average = np.average(img)
     return average
 
 
 def calc_mean():
-    img = cv2.imread('../Resources/dog.jpg', cv2.IMREAD_COLOR)
+    img = cv2.imread(IMAGE_RESOURCE, cv2.IMREAD_COLOR)
     mean = cv2.mean(img)
     return mean
 
 
 def calc_good_features():
-    img = cv2.imread('../Resources/dog.jpg', cv2.IMREAD_COLOR)
+    img = cv2.imread(IMAGE_RESOURCE, cv2.IMREAD_COLOR)
     grey = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     corners = cv2.goodFeaturesToTrack(grey, 20, 0.5, 10)
     corners = np.int0(corners)
@@ -60,7 +63,7 @@ def calc_good_features():
 
 
 def calc_harris_corner_detection():
-    img = cv2.imread('../Resources/dog.jpg', cv2.IMREAD_COLOR)
+    img = cv2.imread(IMAGE_RESOURCE, cv2.IMREAD_COLOR)
     grey = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     corners = cv2.cornerHarris(grey, 2, 3, 0.04)
 
@@ -69,8 +72,41 @@ def calc_harris_corner_detection():
     cv2.imshow('corners', img)
 
 
+def calc_surf_keypoints_and_descriptors():
+    # SURF is a licensed algorithm!!
+    img = cv2.imread(IMAGE_RESOURCE, cv2.IMREAD_GRAYSCALE)
+    surf = cv2.xfeatures2d.SURF_create(5000)
+    kp, des = surf.detectAndCompute(img, None)
+    # print(kp)
+    # print(des)
+    # print(surf.descriptorSize())
+    img2 = cv2.drawKeypoints(img, kp, des, (255, 0, 0), 4)
+    cv2.imshow('surf', img2)
 
 
+def calc_orbs_keypoints():
+    img = cv2.imread(IMAGE_RESOURCE, cv2.IMREAD_GRAYSCALE)
+    cv2.ocl.setUseOpenCL(False)
+    orb = cv2.ORB_create()
+    # kp = orb.detect(img, None)
+    kp, des = orb.detectAndCompute(img, None)
+
+    img2 = cv2.drawKeypoints(img, kp, des, color=(0, 255, 0), flags=0)
+    cv2.imshow('orbs', img2)
+
+
+# DO FAST NEXT
+# http://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_feature2d/py_fast/py_fast.html#fast
+
+
+
+if True:
+    calc_orbs_keypoints()
+
+
+
+if False:
+    calc_surf_keypoints_and_descriptors()
 
 
 if False:
