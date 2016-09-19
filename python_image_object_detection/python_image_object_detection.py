@@ -11,6 +11,7 @@ class PythonImageObjectDetection:
     enable_good_features_output = True
     enable_harris_corner_detection_output = True
     enable_orbs_output = True
+    enable_orbs_only_on_blue = True     # should really output bgr
 
     def __init__(self, image_file, output_images):
         self._image_file_path = image_file
@@ -71,8 +72,32 @@ class PythonImageObjectDetection:
 
         if PythonImageObjectDetection.enable_orbs_output:
             output_img = self.img.copy()
-            output_img = cv2.drawKeypoints(self.img, kp, des, color=(0, 255, 0), flags=0)
+            output_img = cv2.drawKeypoints(output_img, kp, des, color=(0, 255, 0), flags=0)
             cv2.imwrite(self._rename_file('orbs'), output_img)
+
+    def _calc_orbs_only_blue(self):
+        hsv = cv2.cvtColor(self.img, cv2.COLOR_BGR2HSV)
+
+        # define range of blue color in HSV
+        lower_blue = np.array([110,50,50])
+        upper_blue = np.array([130,255,255])
+
+        # Threshold the HSV image to get only blue colors
+        mask = cv2.inRange(hsv, lower_blue, upper_blue)
+        result = cv2.bitwise_and(hsv, hsv, mask=mask)
+
+        # perform orb detection
+        cv2.ocl.setUseOpenCL(False)
+        orb = cv2.ORB_create()
+        kp, des = orb.detectAndCompute(result, None)
+
+        if PythonImageObjectDetection.enable_orbs_only_on_blue:
+            cv2.imwrite(self._rename_file('orbs_blue_original'), hsv)
+            cv2.imwrite(self._rename_file('orbs_blue_mask'), mask)
+            cv2.imwrite(self._rename_file('orbs_blue_result'), result)
+
+            output_img = cv2.drawKeypoints(result, kp, des, color=(0, 255, 0), flags=0)
+            cv2.imwrite(self._rename_file('orbs_blue'), output_img)
 
     def execute(self):
         self.img = cv2.imread(self._image_file_path, cv2.IMREAD_COLOR)
@@ -83,6 +108,8 @@ class PythonImageObjectDetection:
 
         self._calc_good_features()
         self._calc_harris_corner_detection()
+        self._calc_orbs_keypoints()
+        self._calc_orbs_only_blue()
 
 
 
