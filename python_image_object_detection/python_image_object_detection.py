@@ -12,6 +12,7 @@ class PythonImageObjectDetection:
     enable_harris_corner_detection_output = True
     enable_orbs_output = True
     enable_orbs_only_on_blue = True     # should really output bgr
+    enable_surf_output = True
 
     def __init__(self, image_file, output_images):
         self._image_file_path = image_file
@@ -99,6 +100,15 @@ class PythonImageObjectDetection:
             output_img = cv2.drawKeypoints(result, kp, des, color=(0, 255, 0), flags=0)
             cv2.imwrite(self._rename_file('orbs_blue'), output_img)
 
+    def _calc_surf_keypoints_and_descriptors(self):
+        # SURF is a licensed algorithm!!
+        surf = cv2.xfeatures2d.SURF_create(5000)
+        kp, des = surf.detectAndCompute(self.grey, None)
+
+        if PythonImageObjectDetection.enable_surf_output:
+            output_img = cv2.drawKeypoints(self.img, kp, des, (255, 0, 0), 4)
+            cv2.imwrite(self._rename_file('surf'), output_img)
+
     def execute(self):
         self.img = cv2.imread(self._image_file_path, cv2.IMREAD_COLOR)
         self.grey = cv2.cvtColor(self.img, cv2.COLOR_BGR2GRAY)
@@ -110,6 +120,7 @@ class PythonImageObjectDetection:
         self._calc_harris_corner_detection()
         self._calc_orbs_keypoints()
         self._calc_orbs_only_blue()
+        self._calc_surf_keypoints_and_descriptors()
 
 
 
