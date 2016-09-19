@@ -10,6 +10,7 @@ import os
 class PythonImageObjectDetection:
     enable_good_features_output = True
     enable_harris_corner_detection_output = True
+    enable_orbs_output = True
 
     def __init__(self, image_file, output_images):
         self._image_file_path = image_file
@@ -62,6 +63,16 @@ class PythonImageObjectDetection:
             output_img = self.img.copy()
             output_img[corners > 0.01 * corners.max()] = [0, 0, 255]
             cv2.imwrite(self._rename_file('harris_corners'), output_img)
+
+    def _calc_orbs_keypoints(self):
+        cv2.ocl.setUseOpenCL(False)
+        orb = cv2.ORB_create()
+        kp, des = orb.detectAndCompute(self.img, None)
+
+        if PythonImageObjectDetection.enable_orbs_output:
+            output_img = self.img.copy()
+            output_img = cv2.drawKeypoints(self.img, kp, des, color=(0, 255, 0), flags=0)
+            cv2.imwrite(self._rename_file('orbs'), output_img)
 
     def execute(self):
         self.img = cv2.imread(self._image_file_path, cv2.IMREAD_COLOR)
