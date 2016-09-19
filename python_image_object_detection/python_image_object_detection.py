@@ -4,130 +4,113 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 import timeit
+import json
+import os
 
-"""
-- parse an image and extract as much object data as possible
-- ie. instead of calling out to a API?
-- how many edges? (high edges = high detail, city or crowd scene?)
-- taken during day or night
-- how much pixesl in foreground vs background
-- color mean
-"""
+class PythonImageObjectDetection:
+    enable_good_features_output = True
+    enable_harris_corner_detection_output = True
+
+    def __init__(self, image_file, output_images):
+        self._image_file_path = image_file
+        self._output_images = output_images
+        self.data_for_json = dict()
+        self.json = None
+        self.img = None
+        self.grey = None
+
+    # def save_avg_img_intensity_manual(self):
+    #     rows = self.img.shape[0]
+    #     cols = self.img.shape[0]
+    #     pixel_bgr = 0.0
+    #     for row in range(rows):
+    #         for col in range(cols):
+    #             pixel_bgr += float(self.img[row, col])
+    #
+    #     avg_pixel_bgr = pixel_bgr / float(rows*cols)
+    #     self.data_for_json['avg_pixel_bgr'] = avg_pixel_bgr
+
+    def _rename_file(self, inject):
+        filename, file_extension = os.path.splitext(self._image_file_path)
+        filename = filename + '_' + inject
+        return filename + '' + file_extension
+
+    def _save_avg_img_intensity_manual(self):
+        average = np.average(self.grey)
+        self.data_for_json['avg_pixel_bgr'] = average
+
+    def _save_image_mean(self):
+        mean = cv2.mean(self.img)
+        self.data_for_json['mean'] = mean
+
+    def _calc_good_features(self):
+        corners = cv2.goodFeaturesToTrack(self.grey, 20, 0.5, 10)
+        corners = np.int0(corners)
+
+        if PythonImageObjectDetection.enable_good_features_output:
+            output_img = self.img.copy()
+            for corner in corners:
+                x, y = corner.ravel()
+                cv2.circle(output_img, (x, y), 3, 255, -1)
+            cv2.imwrite(self._rename_file('good_features'), output_img)
+
+    def _calc_harris_corner_detection(self):
+        corners = cv2.cornerHarris(self.grey, 2, 3, 0.04)
+        corners = cv2.dilate(corners, None)
+
+        if PythonImageObjectDetection.enable_harris_corner_detection_output:
+            output_img = self.img.copy()
+            output_img[corners > 0.01 * corners.max()] = [0, 0, 255]
+            cv2.imwrite(self._rename_file('harris_corners'), output_img)
+
+    def execute(self):
+        self.img = cv2.imread(self._image_file_path, cv2.IMREAD_COLOR)
+        self.grey = cv2.cvtColor(self.img, cv2.COLOR_BGR2GRAY)
+
+        self._save_avg_img_intensity_manual()
+        self._save_image_mean()
+
+        self._calc_good_features()
+        self._calc_harris_corner_detection()
 
 
-img = cv2.imread('../Resources/dog.jpg', cv2.IMREAD_GRAYSCALE)
-# img = cv2.imread('../Resources/dog.jpg', cv2.IMREAD_COLOR)
+
+'''
+- go through the directory (later)
+- run the default object feature detectors
+- extract data
+- or store data points into json
+'''
+
+if __name__ == "__main__":
+    detector = PythonImageObjectDetection('../Resources/dog.jpg', True)
+    detector.execute()
+    print(detector.json)
 
 
-def avg_img_intensity_manual():
-    img = cv2.imread('../Resources/dog.jpg', cv2.IMREAD_GRAYSCALE)
-    rows = img.shape[0]
-    cols = img.shape[0]
-    pixel_bgr = 0.0
-    for row in range(rows):
-        for col in range(cols):
-            pixel_bgr += float(img[row, col])
-
-    avg_pixel_bgr = pixel_bgr / float(rows*cols)
-    return avg_pixel_bgr
 
 
-def avg_img_intensity_numpy():
-    img = cv2.imread('../Resources/dog.jpg', cv2.IMREAD_GRAYSCALE)
-    average = np.average(img)
-    return average
 
 
-def calc_mean():
-    img = cv2.imread('../Resources/dog.jpg', cv2.IMREAD_COLOR)
-    mean = cv2.mean(img)
-    return mean
 
 
-def calc_good_features():
-    img = cv2.imread('../Resources/dog.jpg', cv2.IMREAD_COLOR)
-    grey = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    corners = cv2.goodFeaturesToTrack(grey, 20, 0.5, 10)
-    corners = np.int0(corners)
-
-    for corner in corners:
-        x, y = corner.ravel()
-        cv2.circle(img, (x, y), 3, 255, -1)
-
-    plt.imshow(img)
-    plt.show()
-    # cv2.imshow('corners', img)
 
 
-def calc_harris_corner_detection():
-    img = cv2.imread('../Resources/dog.jpg', cv2.IMREAD_COLOR)
-    grey = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    corners = cv2.cornerHarris(grey, 2, 3, 0.04)
 
-    corners = cv2.dilate(corners, None)
-    img[corners > 0.01 * corners.max()] = [0, 0, 255]
-    cv2.imshow('corners', img)
 
-if True:
+
+
+if False:
     calc_harris_corner_detection()
 
-
-
-if True:
+if False:
     calc_good_features()
 
 
 
 
 
-#(124.68195753094464, 121.6443755826813, 112.67007171242899, 0.0)
 
-if False:
-    print(calc_mean())
-
-
-
-
-if False:
-    # 119.71247862842034: avg "intensity" as the img was open as grayscale
-    print(avg_img_intensity_manual())
-
-    # 119.306965429
-    print(avg_img_intensity_numpy())
-
-
-# setup = '''
-# from __main__ import avg_img_intensity_manual, avg_img_intensity_numpy
-# '''
-
-# print(min(timeit.Timer('avg_img_intensity_manual()', setup=setup).repeat(7, 1000)))
-
-
-# print(timeit.timeit(avg_img_intensity_manual(), setup="from __main__ import avg_img_intensity_manual"))
-# print(timeit.timeit(avg_img_intensity_numpy(), setup="from __main__ import avg_img_intensity_numpy"))
-
-
-# print(timeit.timeit("avg_img_intensity_manual()", setup="from __main__ import avg_img_intensity_manual"))
-#
-# print(timeit.timeit("avg_img_intensity_numpy()", setup="from __main__ import avg_img_intensity_numpy"))
-
-
-
-# lap = cv2.Laplacian(img, cv2.CV_64F)    # edges
-
-# read to greyscale
-# output image onto color
-
-
-# cv2.imshow('test', img)
-# cv2.imshow('test', lap)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
-
-
-
-# plt.imshow(img, cmap='gray')
-# plt.show()
 
 
 #
